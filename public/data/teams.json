@@ -1,0 +1,83 @@
+[
+    {
+        "id": 1,
+        "home": "Thailand",
+        "away": "Bahrain",
+        "win": 2.32,
+        "draw": 3.25,
+        "lose": 3.30
+    },
+    {
+        "id": 2,
+        "home": "Albirex Niigata",
+        "away": "Young Lions",
+        "win": 1.23,
+        "draw": 6.80,
+        "lose": 8.40
+    },
+    {
+        "id": 3,
+        "home": "Perth",
+        "away": "Armadale",
+        "win": 1.56,
+        "draw": 4.40,
+        "lose": 4.60
+    },
+    {
+        "id": 4,
+        "home": "Japan",
+        "away": "Algeria Youth",
+        "win": 3.75,
+        "draw": 3.15,
+        "lose": 1.88
+    },
+    {
+        "id": 5,
+        "home": "Belouizdad",
+        "away": "Biskra",
+        "win": 4.10,
+        "draw": 3.80,
+        "lose": 1.68
+    },
+    {
+        "id": 6,
+        "home": "Fk Atmosfera",
+        "away": "Be1 Nfa",
+        "win": 1.17,
+        "draw": 5.80,
+        "lose": 15.00
+    },
+    {
+        "id": 7,
+        "home": "Colombia Youth",
+        "away": "Comoros Youth",
+        "win": 1.64,
+        "draw": 3.45,
+        "lose": 5.00
+    },
+    {
+        "id": 8,
+        "home": "Algarna",
+        "away": "Ifk Ostersund",
+        "win": 2.85,
+        "draw": 2.42,
+        "lose": 3.15
+    },
+    {
+        "id": 9,
+        "home": "Kjelsaas 2",
+        "away": "Skeid 2",
+        "win": 1.15,
+        "draw": 6.20,
+        "lose": 12.00
+    },
+    {
+        "id": 10,
+        "home": "Black Rock FC",
+        "away": "Western Mass",
+        "win": 4.50,
+        "draw": 4.20,
+        "lose": 1.56
+    }
+
+]
