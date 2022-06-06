@@ -19,12 +19,29 @@ import {
 } from './home.styles';
 import { useApp } from '@store/AppContext';
 import { IMarket, BetOptionsType } from '@store/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 function Home() {
   const [selectedMarket, setSelectedMarket] = useState<IMarket | null>(null);
   const [amount, setAmount] = useState(100);
+
   const { teams, markets, setBets, bets } = useApp();
+
+  const marketSet = useMemo(() => {
+    return markets.reduce((acc, curr) => {
+      acc = { ...acc, [curr.id]: curr };
+
+      return acc;
+    }, {});
+  }, [markets]);
+
+  const teamSet = useMemo(() => {
+    return teams.reduce((acc, curr) => {
+      acc = { ...acc, [curr.id]: curr };
+
+      return acc;
+    }, {});
+  }, [teams]);
 
   useEffect(() => {
     let isMounted = true;
@@ -37,66 +54,55 @@ function Home() {
     };
   }, [markets]);
 
-  const handleMarketChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedMarket(
-      markets.find((m) => m.id === parseInt(e.target.value)) || null
-    );
-  };
+  const handleMarketChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setSelectedMarket(marketSet?.[parseInt(e.target.value)] || null);
+    },
+    [selectedMarket]
+  );
 
-  const onBetSelected = (option: BetOptionsType, teamId: number) => {
-    const myTeam = teams.find((t) => t.id === teamId);
+  const onBetSelected = useCallback(
+    (option: BetOptionsType, teamId: number) => {
+      const selectedKey = `${teamId},${selectedMarket?.id}`;
 
-    // check if bet exists and modify option
-    if (
-      bets?.find((b) => b.team.id === myTeam?.id) &&
-      bets?.find((b) => b.market.id === selectedMarket.id)
-    ) {
-      setBets(() =>
-        bets.map((b) => {
-          if (b.team.id === myTeam.id && b.market.id === selectedMarket.id) {
-            return {
-              ...b,
-              result: option,
-            };
-          }
-          return b;
-        })
-      );
+      if (bets?.[selectedKey]) {
+        setBets({
+          ...bets,
+          [selectedKey]: { ...bets?.[selectedKey], result: option },
+        });
+        return;
+      }
 
-      return;
-    }
+      setBets({
+        ...bets,
+        [selectedKey]: {
+          market: selectedMarket,
+          team: teamSet?.[teamId],
+          result: option,
+        },
+      });
+    },
+    [bets, selectedMarket]
+  );
 
-    setBets([
-      ...bets,
-      {
-        market: selectedMarket,
-        team: myTeam,
-        result: option,
-      },
-    ]);
-  };
+  const removeBet = useCallback(
+    (marketId: number, teamId: number) => {
+      const selectedKey = `${teamId},${marketId}`;
 
-  const removeBet = (
-    marketId: number,
-    teamId: number,
-    result: BetOptionsType
-  ) => {
-    setBets(
-      bets.filter(
-        (b) =>
-          !(
-            b.market.id === marketId &&
-            b.team.id === teamId &&
-            b.result === result
-          )
-      )
-    );
-  };
+      let filteredBet = { ...bets };
+      delete filteredBet?.[selectedKey];
 
-  const totalOdds = bets?.reduce((acc, curr) => {
-    acc += curr.result === 'win' ? curr?.team?.win : 0;
+      setBets(filteredBet);
+    },
+    [bets]
+  );
+
+  const totalOdds = Object.keys(bets || {}).reduce((acc, curr) => {
+    const b = bets?.[curr];
+    acc *= b?.result === 'win' ? b?.team?.win : 1;
+
     return acc;
-  }, 0);
+  }, 1);
 
   return (
     <DefaultLayout title="Home">
@@ -149,12 +155,8 @@ function Home() {
                 <BtnBetSelect
                   onClick={() => onBetSelected('win', team.id)}
                   isActive={
-                    !!bets.find(
-                      (b) =>
-                        b.team.id === team.id &&
-                        b.market.id === selectedMarket.id &&
-                        b.result === 'win'
-                    )
+                    bets?.[`${team?.id},${selectedMarket?.id}`]?.result ===
+                    'win'
                   }
                 >
                   {team.win}
@@ -163,12 +165,8 @@ function Home() {
                   <BtnBetSelect
                     onClick={() => onBetSelected('draw', team.id)}
                     isActive={
-                      !!bets.find(
-                        (b) =>
-                          b.team.id === team.id &&
-                          b.market.id === selectedMarket.id &&
-                          b.result === 'draw'
-                      )
+                      bets?.[`${team?.id},${selectedMarket?.id}`]?.result ===
+                      'draw'
                     }
                   >
                     {team.draw}
@@ -177,12 +175,8 @@ function Home() {
                 <BtnBetSelect
                   onClick={() => onBetSelected('lose', team.id)}
                   isActive={
-                    !!bets.find(
-                      (b) =>
-                        b.team.id === team.id &&
-                        b.market.id === selectedMarket.id &&
-                        b.result === 'lose'
-                    )
+                    bets?.[`${team?.id},${selectedMarket?.id}`]?.result ===
+                    'lose'
                   }
                 >
                   {team.lose}
@@ -193,13 +187,13 @@ function Home() {
         </SecBetPlayground>
         <SecBetResult>
           <DivBetResultTop>
-            {bets?.map((bet, index) => (
+            {Object.keys(bets || {})?.map((bet, index) => (
               <DivBetResultCard key={index}>
                 <DivBetResultCardLeft>
                   <button
                     type="button"
                     onClick={() =>
-                      removeBet(bet.market.id, bet.team.id, bet.result)
+                      removeBet(bets?.[bet]?.market?.id, bets?.[bet]?.team.id)
                     }
                   >
                     &times;
@@ -207,27 +201,31 @@ function Home() {
                 </DivBetResultCardLeft>
                 <DivBetResultCardCenter>
                   <a href="#">
-                    {bet?.team?.home} Vs. {bet?.team?.away}
+                    {bets?.[bet]?.team?.home} Vs. {bets?.[bet]?.team?.away}
                   </a>
                   <div className="odds">
-                    <h6>{bet?.market?.name}</h6>
+                    <h6>{bets?.[bet]?.market?.name}</h6>
                     <span />
                     <h6>
-                      {bet?.result === 'win'
-                        ? bet?.team?.home
-                        : bet?.result === 'draw'
+                      {bets?.[bet]?.market?.id === 2
+                        ? bets?.[bet]?.result === 'win'
+                          ? 'Yes'
+                          : 'No'
+                        : bets?.[bet]?.result === 'win'
+                        ? bets?.[bet]?.team?.home
+                        : bets?.[bet]?.result === 'draw'
                         ? 'Draw'
-                        : bet?.team?.away}
+                        : bets?.[bet]?.team?.away}
                     </h6>
                   </div>
                 </DivBetResultCardCenter>
                 <DivBetResultCardRight>
                   <h6>
-                    {bet?.result === 'win'
-                      ? bet?.team?.win
-                      : bet?.result === 'draw'
-                      ? bet?.team?.draw
-                      : bet?.team?.lose}
+                    {bets?.[bet]?.result === 'win'
+                      ? bets?.[bet]?.team?.win
+                      : bets?.[bet]?.result === 'draw'
+                      ? bets?.[bet]?.team?.draw
+                      : bets?.[bet]?.team?.lose}
                   </h6>
                 </DivBetResultCardRight>
               </DivBetResultCard>
@@ -236,7 +234,7 @@ function Home() {
           <DivBetResultBottom>
             <DivBetResultBottomBox>
               <h5>Total Odds</h5>
-              <h5>{totalOdds}</h5>
+              <h5>{totalOdds.toFixed(2)}</h5>
             </DivBetResultBottomBox>
             <DivBetResultBottomBox>
               <h5>Final Payout</h5>

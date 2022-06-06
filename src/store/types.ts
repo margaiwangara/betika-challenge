@@ -19,11 +19,15 @@ export interface IBet {
   result: BetOptionsType;
 }
 
+export interface IBetType {
+  string: IBet;
+}
+
 export interface IState {
   markets: IMarket[];
   setMarkets: React.Dispatch<React.SetStateAction<IMarket[]>>;
   teams: ITeam[];
   setTeams: React.Dispatch<React.SetStateAction<ITeam[]>>;
-  bets: IBet[];
-  setBets: React.Dispatch<React.SetStateAction<IBet[]>>;
+  bets: IBetType;
+  setBets: React.Dispatch<React.SetStateAction<IBetType>>;
 }
