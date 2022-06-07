@@ -66,23 +66,24 @@ function Home() {
       const selectedKey = `${teamId},${selectedMarket?.id}`;
 
       if (bets?.[selectedKey]) {
-        setBets({
-          ...bets,
+        setBets((prevBets) => ({
+          ...prevBets,
           [selectedKey]: { ...bets?.[selectedKey], result: option },
-        });
+        }));
         return;
       }
 
-      setBets({
-        ...bets,
+      setBets((prevBets) => ({
+        ...prevBets,
         [selectedKey]: {
+          // [teamid,marketid]
           market: selectedMarket,
           team: teamSet?.[teamId],
           result: option,
         },
-      });
+      }));
     },
-    [bets, selectedMarket]
+    [setBets, selectedMarket]
   );
 
   const removeBet = useCallback(
